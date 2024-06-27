@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+          integrity="sha512-jQ3JQ7nqBRx4MwR5fD8sqFQ/cXqU/0i1F5Qemw4LVsBhZKqypYvPtMfmXUDBvJ5fK4ODZPMuFWn7evSoJDf5Eg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+</head>
+<body class="bg-gray-50">
+<header class="bg-green-600 shadow-md">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <img src="src/img/logo-lp3i.png" alt="Logo Politeknik LP3I Kampus Tasikmalaya" class="h-10">
+        <h1 class="text-white text-2xl font-bold">Admin Dashboard</h1>
+    </div>
+</header>
+<main class="container mx-auto p-6">
+    <h2 class="text-3xl font-bold mb-6 text-center text-gray-700">Manage Motor Data</h2>
+    <div class="flex justify-center mb-4">
+        <a href="category.html" class="bg-green-500 text-white px-6 py-2 rounded-lg shadow-lg">Manage Categories</a>
+    </div>
+    <!-- Form Tambah/Edit Motor -->
+    <div class="bg-white p-6 rounded-lg shadow-lg mb-8 max-w-4xl mx-auto">
+        <h3 class="text-xl font-semibold mb-6 text-gray-700">Add/Edit Motor</h3>
+        <form id="motorForm" class="grid grid-cols-1 md:grid-cols-2 gap-6" enctype="multipart/form-data">
+            <input type="hidden" id="id">
+            <div>
+                <label for="nama" class="block text-gray-600 font-medium">Motor Name</label>
+                <input type="text" id="nama" name="nama" class="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring focus:ring-blue-200" required>
+            </div>
+            <div>
+                <label for="foto" class="block text-gray-600 font-medium">Photo</label>
+                <input type="file" id="foto" name="foto" class="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring focus:ring-blue-200">
+            </div>
+            <div>
+                <label for="kategori" class="block text-gray-600 font-medium">Category</label>
+                <select id="kategori" name="kategori" class="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring focus:ring-blue-200" required>
+                </select>
+            </div>
+            <div>
+                <label for="harga" class="block text-gray-600 font-medium">Price</label>
+                <input type="number" id="harga" name="harga" class="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring focus:ring-blue-200" required>
+            </div>
+            <div class="col-span-1 md:col-span-2">
+                <label for="deskripsi" class="block text-gray-600 font-medium">Description</label>
+                <textarea id="deskripsi" name="deskripsi" class="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring focus:ring-blue-200" required></textarea>
+            </div>
+            <div class="col-span-1 md:col-span-2 flex justify-end">
+                <button type="button" onclick="SaveMotor()" id="save" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg">Save</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabel Data Motor -->
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+        <h3 class="text-xl font-semibold mb-6 text-gray-700">Motor List</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white">
+                <thead>
+                <tr class="bg-green-600 text-white">
+                    <th class="w-1/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">No</th>
+                    <th class="w-2/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+                    <th class="w-2/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Photo</th>
+                    <th class="w-2/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Category</th>
+                    <th class="w-3/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Description</th>
+                    <th class="w-1/12 px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">Price</th>
+                    <th class="w-1/12 px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">Actions</th>
+                </tr>
+                </thead>
+                <tbody id="motorTableBody" class="divide-y divide-gray-200">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+<footer class="bg-gray-800 mt-12 py-6">
+    <div class="container mx-auto px-4 text-center">
+        <p class="text-sm text-gray-300">© 2024 Materi kuliah Front End Development UAS | Politeknik LP3I Kampus Tasikmalaya</p>
+    </div>
+</footer>
+
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+    const apiUrl = 'http://localhost:3000/product';
+    const categoryUrl = 'http://localhost:3000/category'; 
+
+    const GetMotor = async () => {
+        await axios.get(apiUrl)
+            .then((response) => {
+                console.log(response.data);
+                const motors = response.data;
+                let bucket = '';
+                motors.forEach((motor, index) => {
+                    bucket += `
+                        <tr class="hover:bg-gray-100">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${index + 1}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${motor.nama}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                <img src="${motor.foto}" alt="${motor.nama}" class="w-20 h-20 object-cover mx-auto rounded-full">
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${motor.kategori}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${motor.deskripsi}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">Rp${motor.harga.toLocaleString()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
+                                <button class="bg-yellow-500 text-white px-3 py-1 rounded-lg mr-2" type="button" onclick="EditMotor('${motor.id}')"><i class="fas fa-edit"></i> Edit</button>
+                                <button class="bg-red-500 text-white px-3 py-1 rounded-lg" type="button" onclick="DeleteMotor('${motor.id}')"><i class="fas fa-trash"></i> Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                document.getElementById('motorTableBody').innerHTML = bucket;
+            })
+            .catch((error) => {
+                alert(error.message);
+            });
+    };
+
+    const SaveMotor = async () => {
+        let nama = document.getElementById('nama').value;
+        let foto = document.getElementById('foto').files[0];
+        let kategori = document.getElementById('kategori').value;
+        let harga = document.getElementById('harga').value;
+        let deskripsi = document.getElementById('deskripsi').value;
+
+        let reader = new FileReader();
+        reader.readAsDataURL(foto);
+        reader.onloadend = async () => {
+            let base64foto = reader.result;
+
+            const motorData = {
+                nama: nama,
+                foto: base64foto,
+                kategori: kategori,
+                harga: harga,
+                deskripsi: deskripsi
+            };
+
+            await axios.post(apiUrl, motorData)
+                .then((response) => {
+                    console.log(response);
+                    GetMotor();
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        };
+    };
+
+    const UpdateMotor = async (id) => {
+        let nama = document.getElementById('nama').value;
+        let foto = document.getElementById('foto').files[0];
+        let kategori = document.getElementById('kategori').value;
+        let harga = document.getElementById('harga').value;
+        let deskripsi = document.getElementById('deskripsi').value;
+
+        let reader = new FileReader();
+        reader.readAsDataURL(foto);
+        reader.onloadend = async () => {
+            let base64foto = reader.result;
+
+            const motorData = {
+                nama: nama,
+                foto: base64foto,
+                kategori: kategori,
+                harga: harga,
+                deskripsi: deskripsi
+            };
+
+            await axios.put(`${apiUrl}/${id}`, motorData)
+                .then((response) => {
+                    console.log(response);
+                    GetMotor();
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        };
+    };
+
+    const DeleteMotor = async (id) => {
+        const confirmVal = confirm('Are you sure you want to delete this item?');
+        if (confirmVal) {
+            await axios.delete(`${apiUrl}/${id}`)
+                .then((response) => {
+                    console.log(response);
+                    GetMotor();
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        }
+    };
+
+    const EditMotor = async (id) => {
+        await axios.get(`${apiUrl}/${id}`)
+            .then((response) => {
+                const motor = response.data;
+                document.getElementById("id").value = motor.id;
+                document.getElementById("nama").value = motor.nama;
+                document.getElementById("kategori").value = motor.kategori;
+                // document.getElementById("foto").value = motor.nama;
+                document.getElementById("harga").value = motor.harga;
+                document.getElementById("deskripsi").value = motor.deskripsi;
+                document.getElementById("save").innerText = "Update";
+                const updateButton = document.getElementById("save");
+                updateButton.onclick = () => UpdateMotor(motor.id);
+                console.log(response);
+            })
+            .catch((error) => {
+                alert(error.message);
+            });
+    };
+
+    const getCategory = async () => {
+        await axios.get(categoryUrl)
+            .then((response) => {
+                console.log(response.data);
+                const categories = response.data;
+                let bucket = '';
+                categories.forEach((category) => {
+                    bucket += `
+                        <option value="${category.name}">${category.name}</option>
+                    `;
+                });
+                document.getElementById('kategori').innerHTML = bucket;
+            })
+            .catch((error) => {
+                alert(error.message);
+            });
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        GetMotor();
+        getCategory();
+    });
+</script>
+</body>
+</html>

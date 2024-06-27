@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+          integrity="sha512-jQ3JQ7nqBRx4MwR5fD8sqFQ/cXqU/0i1F5Qemw4LVsBhZKqypYvPtMfmXUDBvJ5fK4ODZPMuFWn7evSoJDf5Eg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+</head>
+<body class="bg-gray-100">
+<header class="bg-green-600 shadow-lg">
+    <div class="container mx-auto px-4 py-4 flex justify-center items-center">
+        <img src="src/img/logo-lp3i.png" alt="Logo Politeknik LP3I Kampus Tasikmalaya" class="h-12">
+    </div>
+</header>
+<main class="container mx-auto p-6">
+    <h2 class="text-3xl font-bold mb-6 text-center text-gray-800">Category Management</h2>
+    <div class="flex justify-center mb-4">
+        <a href="admin.html" class="bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md">Back</a>
+    </div>
+    <!-- Form Tambah/Edit Motor -->
+    <div class="bg-white p-6 rounded-lg shadow-md mb-8 max-w-3xl mx-auto">
+        <h3 class="text-xl font-semibold mb-6 text-gray-700">Add/Edit Category</h3>
+        <form id="categoryForm" class="grid grid-cols-1 gap-6" enctype="multipart/form-data">
+            <input type="hidden" id="id">
+            <div>
+                <label for="nama" class="block text-gray-600 font-medium">Category Name</label>
+                <input type="text" id="nama" name="nama" class="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring focus:ring-green-200" required>
+            </div>
+            <div class="flex justify-end">
+                <button type="button" onclick="saveCategory()" id="save" class="bg-green-600 text-white px-6 py-3 rounded-lg shadow-md">Save</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabel Data Motor -->
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h3 class="text-xl font-semibold mb-6 text-gray-700">Category List</h3>
+        <table class="w-full table-auto">
+            <thead>
+            <tr class="bg-green-600 text-white">
+                <th class="px-4 py-3">No</th>
+                <th class="px-4 py-3">Category</th>
+                <th class="px-4 py-3">Actions</th>
+            </tr>
+            </thead>
+            <tbody id="categoryTableBody">
+
+            </tbody>
+        </table>
+    </div>
+</main>
+<footer class="bg-gray-800 mt-12 py-6">
+    <div class="container mx-auto px-4 text-center">
+        <p class="text-sm text-gray-300">© 2024 Materi kuliah Front End Development UAS | Politeknik LP3I Kampus Tasikmalaya</p>
+    </div>
+</footer>
+
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+    const apiUrl = 'http://localhost:3000/category';
+
+    const getCategories = async () => {
+        await axios.get(apiUrl)
+            .then((response) => {
+                console.log(response.data);
+                const categories = response.data;
+                let bucket = '';
+                categories.forEach((category, index) => {
+                    bucket += `
+                        <tr class="border-b">
+                            <td class="border px-4 py-2 text-center">${index + 1}</td>
+                            <td class="border px-4 py-2">${category.name}</td>
+                            <td class="border px-4 py-2 text-center">
+                                <button class="bg-yellow-500 text-white px-3 py-1 rounded-lg mr-2" type="button" onclick="editCategory('${category.id}')"><i class="fas fa-edit"></i> Edit</button>
+                                <button class="bg-red-500 text-white px-3 py-1 rounded-lg" type="button" onclick="deleteCategory('${category.id}')"><i class="fas fa-trash"></i> Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                document.getElementById('categoryTableBody').innerHTML = bucket;
+            })
+            .catch((error) => {
+                alert(error.message);
+            });
+    };
+
+    const saveCategory = async () => {
+        let id = document.getElementById('id').value;
+        let name = document.getElementById('nama').value;
+
+        const categoryData = {
+            id: id || undefined,
+            name: name
+        };
+
+        if (id) {
+            await axios.put(`${apiUrl}/${id}`, categoryData)
+                .then((response) => {
+                    console.log(response);
+                    resetForm();
+                    getCategories();
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        } else {
+            await axios.post(apiUrl, categoryData)
+                .then((response) => {
+                    console.log(response);
+                    resetForm();
+                    getCategories();
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        }
+    };
+
+    const deleteCategory = async (id) => {
+        const confirmVal = confirm('Are you sure you want to delete this category?');
+        if (confirmVal) {
+            await axios.delete(`${apiUrl}/${id}`)
+                .then((response) => {
+                    console.log(response);
+                    getCategories();
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        }
+    };
+
+    const editCategory = async (id) => {
+        await axios.get(`${apiUrl}/${id}`)
+            .then((response) => {
+                const category = response.data;
+                document.getElementById("id").value = category.id;
+                document.getElementById("nama").value = category.name;
+                document.getElementById("save").innerText = "Update";
+                const updateButton = document.getElementById("save");
+                updateButton.onclick = () => saveCategory();
+                console.log(response);
+            })
+            .catch((error) => {
+                alert(error.message);
+            });
+    };
+
+    const resetForm = () => {
+        document.getElementById('categoryForm').reset();
+        document.getElementById('id').value = '';
+        document.getElementById('save').innerText = 'Save';
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        getCategories();
+    });
+</script>
+</body>
+</html>
